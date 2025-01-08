@@ -10,17 +10,17 @@
 
 @layer base {
   [data-radix-select-content] {
-    @apply bg-white border border-gray-200 shadow-lg;
+    @apply bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden;
   }
-  
+
   [data-radix-select-viewport] {
-    @apply p-1;
+    @apply p-1 bg-white;
   }
-  
+
   [data-radix-select-item] {
     @apply relative flex items-center px-6 py-2 text-sm text-gray-700 rounded-md cursor-pointer outline-none hover:bg-gray-50;
   }
-  
+
   [data-radix-select-item][data-highlighted] {
     @apply bg-blue-50 text-blue-700;
   }
