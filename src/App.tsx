@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit2, Trash2, Plus, X, AlertCircle } from 'lucide-react';
+import { Edit2, Trash2, Plus, X, CircleDashed, Building2, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -59,9 +59,7 @@ export default function App() {
       toast.success('Entity updated successfully');
     } else {
       if (entities.some(entity => entity.entityId === entityId)) {
-        toast.error('Entity ID must be unique!', {
-          icon: <AlertCircle className="h-5 w-5" />
-        });
+        toast.error('Entity ID must be unique!');
         return;
       }
       setEntities(prev => [...prev, { ...formData, entityId }]);
@@ -106,13 +104,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="h-screen grid grid-cols-[450px_1fr]">
+      <div className="h-screen grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[450px_1fr]">
         {/* Form Section */}
-        <div className="p-6 bg-white border-r border-gray-200 overflow-y-auto">
+        <div className="p-6 bg-white border-b lg:border-r border-gray-200 overflow-y-auto">
           <div className="sticky top-0 bg-white pb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              {editingId ? 'Edit Entity' : 'Add New Entity'}
-            </h2>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Building2 className="w-5 h-5 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {editingId ? 'Edit Entity' : 'Add New Entity'}
+              </h2>
+            </div>
             <p className="text-sm text-gray-500 mb-6">
               {editingId ? 'Update the entity details below' : 'Fill in the details to add a new entity'}
             </p>
@@ -125,7 +128,7 @@ export default function App() {
                 <Select
                   name="type"
                   value={formData.type}
-                  onValueChange={(value) => handleInputChange({ target: { name: 'type', value }} as never)}
+                  onValueChange={(value) => handleInputChange({ target: { name: 'type', value }} as any)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select type" />
@@ -267,70 +270,83 @@ export default function App() {
             </div>
           </form>
         </div>
-
+        
         {/* Table Section */}
         <div className="overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-200 bg-white">
-            <h2 className="text-xl font-semibold text-gray-900">Entities List</h2>
-            <p className="text-sm text-gray-500 mt-1">Manage your entities here</p>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-50 rounded-lg">
+                <Database className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Entities List</h2>
+                <p className="text-sm text-gray-500 mt-1">Manage your entities here</p>
+              </div>
+            </div>
           </div>
           
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity ID</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company Code</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Currency/Card Type
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GL Number</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Geo</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Career</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {entities.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
-                      No entities added yet. Start by adding a new entity.
-                    </td>
-                  </tr>
-                ) : (
-                  entities.map((entity) => (
-                    <tr key={entity.entityId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">{entity.entityId}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{entity.companyCode}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {entity.type === 'N' ? entity.currency : entity.cardType}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{entity.glNumber}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{entity.geo}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{entity.career || '-'}</td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleEdit(entity)}
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
-                            title="Edit entity"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(entity.entityId)}
-                            className="text-red-600 hover:text-red-700 transition-colors"
-                            title="Delete entity"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+          <div className="flex-1 overflow-x-auto">
+            {entities.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                <div className="rounded-full bg-gray-100 p-4 mb-4">
+                  <CircleDashed className="w-8 h-8 text-gray-400 animate-spin-slow" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">No entities yet</h3>
+                <p className="text-sm text-gray-500 mb-4 max-w-sm">
+                  Start by adding a new entity using the form on the left. Your entities will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="min-w-[800px]">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity ID</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company Code</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Currency/Card Type
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GL Number</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Geo</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Career</th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {entities.map((entity) => (
+                      <tr key={entity.entityId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">{entity.entityId}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{entity.companyCode}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {entity.type === 'N' ? entity.currency : entity.cardType}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{entity.glNumber}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{entity.geo}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{entity.career || '-'}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => handleEdit(entity)}
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                              title="Edit entity"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(entity.entityId)}
+                              className="text-red-600 hover:text-red-700 transition-colors"
+                              title="Delete entity"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
