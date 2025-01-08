@@ -22,14 +22,14 @@ export default function App() {
 
   const handleSubmit = (data: FormData) => {
     const entityId = `${data.type}${data.id}`;
-    
+
     if (editingId) {
-      setEntities(prev => 
-        prev.map(entity => 
-          entity.entityId === editingId 
-            ? { ...data, entityId }
-            : entity
-        )
+      setEntities(prev =>
+          prev.map(entity =>
+              entity.entityId === editingId
+                  ? { ...data, entityId }
+                  : entity
+          )
       );
       setEditingId(null);
       toast.success('Entity updated successfully');
@@ -41,12 +41,12 @@ export default function App() {
       setEntities(prev => [...prev, { ...data, entityId }]);
       toast.success('Entity added successfully');
     }
-    
+
     handleClear();
   };
 
   const handleClear = () => {
-    setFormData(initialFormData);
+    setFormData({ ...initialFormData });
     setEditingId(null);
   };
 
@@ -55,11 +55,11 @@ export default function App() {
       type: entity.type,
       id: entity.id,
       companyCode: entity.companyCode,
-      currency: entity.currency,
-      cardType: entity.cardType,
+      currency: entity.currency || '',
+      cardType: entity.cardType || '',
       glNumber: entity.glNumber,
       geo: entity.geo,
-      career: entity.career
+      career: entity.career || ''
     });
     setEditingId(entity.entityId);
   };
@@ -70,20 +70,20 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="h-screen grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[450px_1fr]">
-        <EntityForm
-          onSubmit={handleSubmit}
-          onClear={handleClear}
-          editingId={editingId}
-          initialData={formData}
-        />
-        <EntityList
-          entities={entities}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+      <div className="min-h-screen bg-gray-50">
+        <div className="h-screen grid grid-cols-1 lg:grid-cols-[400px_1fr] xl:grid-cols-[450px_1fr]">
+          <EntityForm
+              onSubmit={handleSubmit}
+              onClear={handleClear}
+              editingId={editingId}
+              initialData={formData}
+          />
+          <EntityList
+              entities={entities}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+          />
+        </div>
       </div>
-    </div>
   );
 }
