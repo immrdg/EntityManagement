@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Entity, FormData } from '@/types';
+import { useNotifications } from './NotificationContext';
 
 interface EntityContextType {
   entities: Entity[];
@@ -29,6 +30,7 @@ export function EntityProvider({ children }: { children: ReactNode }) {
   const [entities, setEntities] = useState<Entity[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const { addNotification } = useNotifications();
 
   const handleSubmit = (data: FormData) => {
     const entityId = `${data.type}${data.id}`;
@@ -42,14 +44,38 @@ export function EntityProvider({ children }: { children: ReactNode }) {
         )
       );
       setEditingId(null);
-      toast.success('Entity updated successfully');
+      toast.success('Entity updated successfully', {
+        description: `Entity ${entityId} has been updated.`,
+        duration: 4000,
+      });
+      addNotification({
+        title: 'Entity Updated',
+        description: `Entity ${entityId} has been updated successfully.`,
+        type: 'success'
+      });
     } else {
       if (entities.some(entity => entity.entityId === entityId)) {
-        toast.error('Entity ID must be unique!');
+        toast.error('Entity creation failed', {
+          description: 'An entity with this ID already exists.',
+          duration: 5000,
+        });
+        addNotification({
+          title: 'Entity Creation Failed',
+          description: 'An entity with this ID already exists.',
+          type: 'error'
+        });
         return;
       }
       setEntities(prev => [...prev, { ...data, entityId }]);
-      toast.success('Entity added successfully');
+      toast.success('Entity created successfully', {
+        description: `Entity ${entityId} has been created.`,
+        duration: 4000,
+      });
+      addNotification({
+        title: 'Entity Created',
+        description: `Entity ${entityId} has been created successfully.`,
+        type: 'success'
+      });
     }
 
     handleClear();
@@ -72,11 +98,37 @@ export function EntityProvider({ children }: { children: ReactNode }) {
       career: entity.career || ''
     });
     setEditingId(entity.entityId);
+    toast.info('Editing entity', {
+      description: `Now editing entity ${entity.entityId}`,
+      duration: 3000,
+    });
+    addNotification({
+      title: 'Editing Entity',
+      description: `Now editing entity ${entity.entityId}`,
+      type: 'info'
+    });
   };
 
   const handleDelete = (entityId: string) => {
-    setEntities(prev => prev.filter(entity => entity.entityId !== entityId));
-    toast.success('Entity deleted successfully');
+    toast.promise(
+      new Promise((resolve) => {
+        setTimeout(() => {
+          setEntities(prev => prev.filter(entity => entity.entityId !== entityId));
+          resolve(true);
+        }, 500);
+      }),
+      {
+        loading: 'Deleting entity...',
+        success: `Entity ${entityId} has been deleted`,
+        error: 'Failed to delete entity',
+        duration: 4000,
+      }
+    );
+    addNotification({
+      title: 'Entity Deleted',
+      description: `Entity ${entityId} has been deleted successfully.`,
+      type: 'success'
+    });
   };
 
   return (

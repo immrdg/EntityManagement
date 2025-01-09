@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import {
   Building2,
-  Bell,
   Search,
   Menu,
   X,
   ChevronDown,
 } from 'lucide-react';
+import { NotificationPopover } from './NotificationPopover';
 
 export function SuperNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [notifications] = useState(3);
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800">
@@ -37,14 +36,7 @@ export function SuperNav() {
             </div>
 
             {/* Notifications */}
-            <button className="relative text-gray-100 hover:text-white focus:outline-none">
-              <Bell className="h-6 w-6" />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-                  {notifications}
-                </span>
-              )}
-            </button>
+            <NotificationPopover />
 
             {/* Profile */}
             <button className="flex items-center gap-2 text-sm text-gray-100 hover:text-white focus:outline-none">

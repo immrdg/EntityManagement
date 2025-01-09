@@ -12,3 +12,12 @@ export interface FormData {
 export interface Entity extends FormData {
   entityId: string;
 }
+
+export interface Notification {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: Date;
+  type: 'success' | 'error' | 'info';
+  read: boolean;
+}
