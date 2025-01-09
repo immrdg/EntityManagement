@@ -1,15 +1,11 @@
 import { Database } from 'lucide-react';
-import { Entity } from '@/types';
+import { useEntity } from '@/context/EntityContext';
 import { EmptyState } from './EmptyState';
 import { EntityTable } from './EntityTable';
 
-interface EntityListProps {
-  entities: Entity[];
-  onEdit: (entity: Entity) => void;
-  onDelete: (entityId: string) => void;
-}
+export function EntityList() {
+  const { entities, handleEdit, handleDelete } = useEntity();
 
-export function EntityList({ entities, onEdit, onDelete }: EntityListProps) {
   return (
     <div className="overflow-hidden flex flex-col">
       <div className="p-6 border-b border-gray-200 bg-white">
@@ -28,7 +24,7 @@ export function EntityList({ entities, onEdit, onDelete }: EntityListProps) {
         {entities.length === 0 ? (
           <EmptyState />
         ) : (
-          <EntityTable entities={entities} onEdit={onEdit} onDelete={onDelete} />
+          <EntityTable entities={entities} onEdit={handleEdit} onDelete={handleDelete} />
         )}
       </div>
     </div>

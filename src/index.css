@@ -9,20 +9,105 @@
 }
 
 @layer base {
-  [data-radix-select-content] {
-    @apply bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden;
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
   }
+}
 
-  [data-radix-select-viewport] {
-    @apply p-1 bg-white;
+@layer base {
+  * {
+    @apply border-border;
   }
-
-  [data-radix-select-item] {
-    @apply relative flex items-center px-6 py-2 text-sm text-gray-700 rounded-md cursor-pointer outline-none hover:bg-gray-50;
+  body {
+    @apply bg-background text-foreground;
   }
+}
 
-  [data-radix-select-item][data-highlighted] {
-    @apply bg-blue-50 text-blue-700;
+/* Navigation Menu Styles */
+.NavigationMenuContent {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  animation-duration: 150ms;
+  animation-timing-function: ease;
+}
+
+.NavigationMenuContent[data-motion="from-start"] {
+  animation-name: enterFromLeft;
+}
+
+.NavigationMenuContent[data-motion="from-end"] {
+  animation-name: enterFromRight;
+}
+
+.NavigationMenuContent[data-motion="to-start"] {
+  animation-name: exitToLeft;
+}
+
+.NavigationMenuContent[data-motion="to-end"] {
+  animation-name: exitToRight;
+}
+
+@keyframes enterFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes enterFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-200px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes exitToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(200px);
+  }
+}
+
+@keyframes exitToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-200px);
   }
 }
 
