@@ -14,10 +14,25 @@ import { useEntity } from '@/context/EntityContext';
 export function EntityForm() {
   const { editingId, formData: initialData, handleSubmit: onSubmit, handleClear: onClear } = useEntity();
   const [formData, setFormData] = useState<FormData>(initialData);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setFormData(initialData);
+    setHasChanges(false);
   }, [initialData]);
+
+  useEffect(() => {
+    if (editingId) {
+      const hasFormChanges = Object.entries(formData).some(([key, value]) => {
+        // Skip empty string comparison for optional fields if they're undefined in initial data
+        if (value === '' && initialData[key as keyof FormData] === undefined) {
+          return false;
+        }
+        return value !== initialData[key as keyof FormData];
+      });
+      setHasChanges(hasFormChanges);
+    }
+  }, [formData, initialData, editingId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -148,7 +163,14 @@ export function EntityForm() {
         <div className="flex gap-4 pt-2">
           <button
             type="submit"
-            className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            className={`flex-1 px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
+              editingId
+                ? hasChanges
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+            disabled={editingId && !hasChanges}
           >
             {editingId ? (
               <>

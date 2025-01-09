@@ -1,10 +1,19 @@
+import { useState } from 'react';
 import { Database } from 'lucide-react';
 import { useEntity } from '@/context/EntityContext';
 import { EmptyState } from './EmptyState';
 import { EntityTable } from './EntityTable';
+import { Pagination } from './Pagination';
 
 export function EntityList() {
   const { entities, handleEdit, handleDelete } = useEntity();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(entities.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEntities = entities.slice(startIndex, endIndex);
 
   return (
     <div className="overflow-hidden flex flex-col">
@@ -24,7 +33,20 @@ export function EntityList() {
         {entities.length === 0 ? (
           <EmptyState />
         ) : (
-          <EntityTable entities={entities} onEdit={handleEdit} onDelete={handleDelete} />
+          <>
+            <EntityTable 
+              entities={currentEntities} 
+              onEdit={handleEdit} 
+              onDelete={handleDelete} 
+            />
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Coins, CreditCard } from 'lucide-react';
 import { Entity } from '@/types';
 
 interface EntityTableProps {
@@ -28,7 +28,14 @@ export function EntityTable({ entities, onEdit, onDelete }: EntityTableProps) {
               <td className="px-6 py-4 text-sm text-gray-900 font-medium">{entity.entityId}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{entity.companyCode}</td>
               <td className="px-6 py-4 text-sm text-gray-600">
-                {entity.type === 'N' ? entity.currency : entity.cardType}
+                <div className="flex items-center gap-2">
+                  {entity.type === 'N' ? (
+                    <Coins className="w-4 h-4 text-yellow-500" />
+                  ) : (
+                    <CreditCard className="w-4 h-4 text-blue-500" />
+                  )}
+                  {entity.type === 'N' ? entity.currency : entity.cardType}
+                </div>
               </td>
               <td className="px-6 py-4 text-sm text-gray-600">{entity.glNumber}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{entity.geo}</td>

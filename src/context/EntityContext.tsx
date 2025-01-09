@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Entity, FormData } from '@/types';
 import { useNotifications } from './NotificationContext';
@@ -24,13 +24,23 @@ const initialFormData: FormData = {
   cardType: ''
 };
 
+const STORAGE_KEY = 'entityhub_entities';
+
 const EntityContext = createContext<EntityContextType | undefined>(undefined);
 
 export function EntityProvider({ children }: { children: ReactNode }) {
-  const [entities, setEntities] = useState<Entity[]>([]);
+  const [entities, setEntities] = useState<Entity[]>(() => {
+    const savedEntities = localStorage.getItem(STORAGE_KEY);
+    return savedEntities ? JSON.parse(savedEntities) : [];
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const { addNotification } = useNotifications();
+
+  // Persist entities to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entities));
+  }, [entities]);
 
   const handleSubmit = (data: FormData) => {
     const entityId = `${data.type}${data.id}`;
