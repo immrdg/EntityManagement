@@ -34,7 +34,11 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+    <div className="flex items-center justify-between">
+      {/* Empty div for left spacing */}
+      <div className="w-24" />
+      
+      {/* Centered navigation */}
       <div className="flex items-center gap-2">
         <button
           onClick={handlePrevious}
@@ -82,8 +86,12 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
-      <div className="text-sm text-gray-500">
-        Page {currentPage} of {totalPages}
+
+      {/* Right-aligned page count */}
+      <div className="w-24 text-right">
+        <span className="text-sm text-gray-500">
+          Page {currentPage} of {totalPages}
+        </span>
       </div>
     </div>
   );
