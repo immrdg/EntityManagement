@@ -1,27 +1,65 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Building2,
   Search,
   Menu,
   X,
   ChevronDown,
+  Code2
 } from 'lucide-react';
 import { NotificationPopover } from './NotificationPopover';
 
 export function SuperNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentView = location.pathname === '/evaluator' ? 'evaluator' : 'entities';
+
+  const handleViewChange = (view: 'entities' | 'evaluator') => {
+    navigate(view === 'entities' ? '/' : '/evaluator');
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800">
       <div className="max-w-[2000px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
-          <div className="flex-shrink-0 flex items-center">
-            <Building2 className="h-7 w-7 text-white" />
-            <span className="ml-2 text-white text-lg font-semibold">EntityHub</span>
-          </div>
+          <div className="flex items-center space-x-8">
+            <div 
+              className="flex-shrink-0 flex items-center cursor-pointer"
+              onClick={() => handleViewChange('entities')}
+            >
+              <Building2 className="h-7 w-7 text-white" />
+              <span className="ml-2 text-white text-lg font-semibold">EntityHub</span>
+            </div>
 
-          {/* Desktop Navigation */}
+            {/* Navigation Links */}
+            <div className="hidden md:flex space-x-4">
+              <button
+                onClick={() => handleViewChange('entities')}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentView === 'entities'
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                Entities
+              </button>
+              <button
+                onClick={() => handleViewChange('evaluator')}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  currentView === 'evaluator'
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Code2 className="w-4 h-4" />
+                Expression Evaluator
+              </button>
+            </div>
+          </div>
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-4">
@@ -69,6 +107,29 @@ export function SuperNav() {
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-blue-800/95 backdrop-blur-sm">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            <button
+              onClick={() => handleViewChange('entities')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                currentView === 'entities'
+                  ? 'bg-white/10 text-white'
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              Entities
+            </button>
+            <button
+              onClick={() => handleViewChange('evaluator')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+                currentView === 'evaluator'
+                  ? 'bg-white/10 text-white'
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Code2 className="w-4 h-4" />
+              Expression Evaluator
+            </button>
+          </div>
           <div className="border-t border-blue-700">
             <div className="flex items-center px-4 py-3">
               <div className="flex-shrink-0">

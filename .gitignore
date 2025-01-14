@@ -22,8 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-
-
+.qodo
 .nx/cache
 .nx/workspace-data
