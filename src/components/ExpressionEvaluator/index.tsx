@@ -138,9 +138,10 @@ export function ExpressionEvaluator() {
 
     // Handle null comparisons
     const processNullComparisons = (str: string) => {
-      str = str.replace(/get\(['"]([^'"]+)['"]\)\s*!=\s*null/g, (match, key) => {
-        return `get('${key}') !== ''`;
+      str = str.replace(/(["'])(.*?)\1\s*!=\s*null/g, (match, quote, value) => {
+        return `"${value}" !== ''`;  // Treat null as an empty string for string comparison
       });
+
       return str;
     };
 
