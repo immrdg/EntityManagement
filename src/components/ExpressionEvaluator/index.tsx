@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { ExpressionInput } from './ExpressionInput';
 import { VariableInput } from './VariableInput';
 import { EvaluationVisualizer } from './EvaluationVisualizer';
-import { StringClass } from './types/StringClass.ts';
-import { BooleanClass } from './types/BooleanClass.ts';
+import { StringClass } from './types/StringClass';
+import { BooleanClass } from './types/BooleanClass';
 import { createTernaryTree, evaluateTernaryTree } from './types/TernaryNode';
 
 interface EvaluationStep {
@@ -18,7 +18,7 @@ export function ExpressionEvaluator() {
   const [expression, setExpression] = useState('');
   const [variables, setVariables] = useState<string[]>([]);
   const [evaluationResult, setEvaluationResult] = useState<{
-    values: Record<string, string>;
+    values: Record<string, string | null>;
     result: string;
     steps: EvaluationStep[];
   } | null>(null);
@@ -29,31 +29,49 @@ export function ExpressionEvaluator() {
     setStep(2);
   };
 
-  const evaluateExpression = (expr: string, values: Record<string, string>): [string, EvaluationStep[]] => {
+  const evaluateExpression = (expr: string, values: Record<string, string | null>): [string, EvaluationStep[]] => {
     const steps: EvaluationStep[] = [];
     let currentExpr = expr;
 
-    // Helper function to add a step
     const addStep = (operation: string, input: string[], output: string, description: string) => {
       steps.push({ operation, input, output, description });
       return output;
     };
 
-    // Create get function for evaluation that always returns a string
     const get = (key: string) => {
-      const value = values[key] || ''; // Empty string for missing values
+      const value = values[key];
+      if (value === null) {
+        return addStep(
+          'Variable Access',
+          [`get('${key}')`],
+          'null',
+          `Retrieved null value for variable '${key}'`
+        );
+      }
       return addStep(
         'Variable Access',
         [`get('${key}')`],
-        `"${value}"`,
+        `"${value || ''}"`,
         `Retrieved value for variable '${key}'`
       );
     };
 
-    // Process string operations (e.g., equals, concat, substring, length)
     const processStringOps = (str: string) => {
-      // Handle `.length()` method using StringClass
+      // Handle null checks first
+      str = str.replace(/(["'].*?["']|null)\s*(==|!=)\s*null/g, (match, value, operator) => {
+        const isNull = value === 'null';
+        const result = operator === '==' ? isNull : !isNull;
+        return addStep(
+          'Null Check',
+          [value, operator, 'null'],
+          result.toString(),
+          `Checked if ${value} is${operator === '!=' ? ' not' : ''} null`
+        );
+      });
+
+      // Handle other string operations only if the value is not null
       str = str.replace(/(".*?")\.length\(\)/g, (match, strValue) => {
+        if (strValue === 'null') return '0';
         const actualStr = strValue.replace(/^"(.*)"$/, '$1');
         const stringObj = new StringClass(actualStr);
         const result = stringObj.length();
@@ -65,8 +83,8 @@ export function ExpressionEvaluator() {
         );
       });
 
-      // Handle `.concat()` method using StringClass
       str = str.replace(/["'](.*?)["']\.concat\(["'](.*?)["']\)/g, (match, str1, str2) => {
+        if (str1 === 'null' || str2 === 'null') return 'null';
         const stringObj1 = new StringClass(str1);
         const result = stringObj1.concat(str2);
         return addStep(
@@ -77,38 +95,31 @@ export function ExpressionEvaluator() {
         );
       });
 
-      // Handle `.substring()` method using StringClass
-      str = str.replace(/(".*?")\.substring\((\d+),\s*(\d+)\)/g, (match, strValue, start, end) => {
-        const stringObj = new StringClass(strValue.replace(/^"(.*)"$/, '$1'));
-        const result = stringObj.substring(parseInt(start), parseInt(end));
-        return addStep(
-          'String Substring',
-          [strValue, start, end],
-          `"${result}"`,
-          `Extracted substring from '${strValue}' between indices ${start} and ${end}`
-        );
-      });
-
-      // Handle `.equals()` method for string literals
-      str = str.replace(/["'](.*?)["']\.equals\(["'](.*?)["']\)/g, (match, str1, str2) => {
-        const stringObj1 = new StringClass(str1);
-        const stringObj2 = new StringClass(str2);
+      str = str.replace(/(".*?")\.equals\((".*?")\)/g, (match, str1, str2) => {
+        if (str1 === 'null' || str2 === 'null') return 'false';
+        const stringObj1 = new StringClass(str1.replace(/^"(.*)"$/, '$1'));
+        const stringObj2 = new StringClass(str2.replace(/^"(.*)"$/, '$1'));
         const result = stringObj1.equals(stringObj2);
         return addStep(
           'String Equality',
           [str1, str2],
           result.toString(),
-          `Compared strings '${str1}' and '${str2}' for equality`
+          `Compared strings ${str1} and ${str2} for equality`
         );
       });
 
       return str;
     };
 
-    // Process logical operators (and/or) using BooleanClass
-    const processLogicalOps = (str: string) => {
-      // Process 'and' operator
-      str = str.replace(/(.+?)\s+and\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
+    try {
+      // Replace get() calls first
+      currentExpr = currentExpr.replace(/get\(['"](.*?)['"]\)/g, (match, key) => get(key));
+
+      // Process string operations and null checks
+      currentExpr = processStringOps(currentExpr);
+
+      // Process logical operators
+      currentExpr = currentExpr.replace(/(.+?)\s+and\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
         const leftValue = new BooleanClass(left === 'true');
         const rightValue = new BooleanClass(right === 'true');
         const result = leftValue.and(rightValue.value);
@@ -120,8 +131,7 @@ export function ExpressionEvaluator() {
         );
       });
 
-      // Process 'or' operator
-      str = str.replace(/(.+?)\s+or\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
+      currentExpr = currentExpr.replace(/(.+?)\s+or\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
         const leftValue = new BooleanClass(left === 'true');
         const rightValue = new BooleanClass(right === 'true');
         const result = leftValue.or(rightValue.value);
@@ -132,31 +142,6 @@ export function ExpressionEvaluator() {
           `Evaluated logical OR between '${left}' and '${right}'`
         );
       });
-
-      return str;
-    };
-
-    // Handle null comparisons
-    const processNullComparisons = (str: string) => {
-      str = str.replace(/(["'])(.*?)\1\s*!=\s*null/g, (match, quote, value) => {
-        return `"${value}" !== ''`;  // Treat null as an empty string for string comparison
-      });
-
-      return str;
-    };
-
-    try {
-      // Replace get() calls first
-      currentExpr = currentExpr.replace(/get\(['"](.*?)['"]\)/g, (match, key) => get(key));
-
-      // Process string operations
-      currentExpr = processStringOps(currentExpr);
-
-      // Handle null comparisons
-      currentExpr = processNullComparisons(currentExpr);
-
-      // Process logical operators
-      currentExpr = processLogicalOps(currentExpr);
 
       // Create and evaluate ternary expression tree
       const ternaryTree = createTernaryTree(currentExpr);
@@ -182,7 +167,7 @@ export function ExpressionEvaluator() {
     }
   };
 
-  const handleEvaluate = (values: Record<string, string>) => {
+  const handleEvaluate = (values: Record<string, string | null>) => {
     const [result, steps] = evaluateExpression(expression, values);
 
     setEvaluationResult({
