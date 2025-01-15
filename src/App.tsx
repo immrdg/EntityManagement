@@ -5,6 +5,7 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { SuperNav } from '@/components/SuperNav';
 import { ExpressionEvaluator } from '@/components/ExpressionEvaluator';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import './utils/stringExtensions'; // Import the string extensions
 
 export default function App() {
   return (

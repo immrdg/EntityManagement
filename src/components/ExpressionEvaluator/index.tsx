@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ExpressionInput } from './ExpressionInput';
 import { VariableInput } from './VariableInput';
 import { EvaluationVisualizer } from './EvaluationVisualizer';
+import { StringClass } from './types/StringClass.ts';
+import { BooleanClass } from './types/BooleanClass.ts';
 
 interface EvaluationStep {
   operation: string;
@@ -38,62 +40,106 @@ export function ExpressionEvaluator() {
 
     // Create get function for evaluation that always returns a string
     const get = (key: string) => {
-      const value = values[key] || '';
+      const value = values[key] || ''; // Empty string for missing values
       return addStep(
-        'Variable Access',
-        [`get('${key}')`],
-        `"${value}"`,
-        `Retrieved value for variable '${key}'`
+          'Variable Access',
+          [`get('${key}')`],
+          `"${value}"`,
+          `Retrieved value for variable '${key}'`
       );
     };
 
-    // Process string operations
+    // Process string operations (e.g., equals, concat, substring, length)
     const processStringOps = (str: string) => {
-      // Replace concat operations
-      str = str.replace(/(.+?)\.concat\((.+?)\)/g, (match, str1, str2) => {
-        const result = str1.replace(/^"(.*)"$/, '$1') + str2.replace(/^"(.*)"$/, '$1');
+      // Handle `.length()` method using StringClass
+      str = str.replace(/(".*?")\.length\(\)/g, (match, strValue) => {
+        const actualStr = strValue.replace(/^"(.*)"$/, '$1');  // Get the raw string value
+        const stringObj = new StringClass(actualStr);          // Create StringClass object
+        const result = stringObj.length();                     // Call length method
         return addStep(
-          'String Concatenation',
-          [str1, str2],
-          `"${result}"`,
-          `Concatenated '${str1}' with '${str2}'`
+            'String Length',
+            [strValue],
+            result.toString(),
+            `Calculated length of string '${strValue}'`
         );
       });
 
-      // Replace substring operations
-      str = str.replace(/(".*?")\.substring\((\d+),\s*(\d+)\)/g, (match, str, start, end) => {
-        const actualStr = str.replace(/^"(.*)"$/, '$1');
-        const result = actualStr.slice(parseInt(start), parseInt(end));
+      // Handle `.concat()` method using StringClass
+      str = str.replace(/["'](.*?)["']\.concat\(["'](.*?)["']\)/g, (match, str1, str2) => {
+        const stringObj1 = new StringClass(str1);
+        const result = stringObj1.concat(str2);  // Call concat method
         return addStep(
-          'Substring',
-          [str, `start: ${start}`, `end: ${end}`],
-          `"${result}"`,
-          `Extracted substring from index ${start} to ${end}`
+            'String Concatenation',
+            [str1, str2],
+            `"${result}"`,
+            `Concatenated strings '${str1}' and '${str2}'`
         );
       });
 
-      // Replace equals operations
-      str = str.replace(/(".*?")\.equals\((".*?")\)/g, (match, str1, str2) => {
-        const actualStr1 = str1.replace(/^"(.*)"$/, '$1');
-        const actualStr2 = str2.replace(/^"(.*)"$/, '$1');
-        const result = actualStr1 === actualStr2;
+      // Handle `.substring()` method using StringClass
+      str = str.replace(/(".*?")\.substring\((\d+),\s*(\d+)\)/g, (match, strValue, start, end) => {
+        const stringObj = new StringClass(strValue.replace(/^"(.*)"$/, '$1'));
+        const result = stringObj.substring(parseInt(start), parseInt(end)); // Call substring method
         return addStep(
-          'String Comparison',
-          [str1, str2],
-          result.toString(),
-          `Compared if '${str1}' equals '${str2}'`
+            'String Substring',
+            [strValue, start, end],
+            `"${result}"`,
+            `Extracted substring from '${strValue}' between indices ${start} and ${end}`
+        );
+      });
+
+      // Handle `.equals()` method for string literals (e.g., "a".equals("b"))
+      str = str.replace(/["'](.*?)["']\.equals\(["'](.*?)["']\)/g, (match, str1, str2) => {
+        const stringObj1 = new StringClass(str1);
+        const stringObj2 = new StringClass(str2);
+        const result = stringObj1.equals(stringObj2);  // Call equals method
+        return addStep(
+            'String Equality',
+            [str1, str2],
+            result.toString(),
+            `Compared strings '${str1}' and '${str2}' for equality`
         );
       });
 
       return str;
     };
 
-    // Process logical operators
+    // Process logical operators (and/or) using BooleanClass
     const processLogicalOps = (str: string) => {
-      // Replace 'and' with '&&' but only between boolean expressions
-      str = str.replace(/(\btrue\b|\bfalse\b)\s+and\s+(\btrue\b|\bfalse\b)/g, '$1 && $2');
-      // Replace 'or' with '||' but only between boolean expressions
-      str = str.replace(/(\btrue\b|\bfalse\b)\s+or\s+(\btrue\b|\bfalse\b)/g, '$1 || $2');
+      // Process 'and' operator using JavaScript '&&' for logical AND
+      str = str.replace(/(.+?)\s+and\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
+        const leftValue = new BooleanClass(left === 'true');
+        const rightValue = new BooleanClass(right === 'true');
+        const result = leftValue.and(rightValue.value);  // Use BooleanClass' 'and' method
+        return addStep(
+            'Logical AND',
+            [left, right],
+            result.toString(),
+            `Evaluated logical AND between '${left}' and '${right}'`
+        );
+      });
+
+      // Process 'or' operator using JavaScript '||' for logical OR
+      str = str.replace(/(.+?)\s+or\s+(.+?)(?=\s*\?|$)/g, (match, left, right) => {
+        const leftValue = new BooleanClass(left === 'true');
+        const rightValue = new BooleanClass(right === 'true');
+        const result = leftValue.or(rightValue.value);   // Use BooleanClass' 'or' method
+        return addStep(
+            'Logical OR',
+            [left, right],
+            result.toString(),
+            `Evaluated logical OR between '${left}' and '${right}'`
+        );
+      });
+
+      return str;
+    };
+
+    // Handle null comparisons like get('Type') != null
+    const processNullComparisons = (str: string) => {
+      str = str.replace(/get\(['"]([^'"]+)['"]\)\s*!=\s*null/g, (match, key) => {
+        return `get('${key}') !== ''`; // Treat 'null' as an empty string for our context
+      });
       return str;
     };
 
@@ -102,20 +148,37 @@ export function ExpressionEvaluator() {
       // Replace get() calls first
       currentExpr = currentExpr.replace(/get\(['"](.*?)['"]\)/g, (match, key) => get(key));
 
-      // Process string operations
+      // Process string operations (concat, substring, equals, length)
       currentExpr = processStringOps(currentExpr);
 
-      // Process logical operators
+      // Handle null comparisons
+      currentExpr = processNullComparisons(currentExpr);
+
+      // Process logical operators (and/or)
       currentExpr = processLogicalOps(currentExpr);
 
-      // Evaluate final expression
+      // Process ternary operations (condition ? value1 : value2)
+      currentExpr = currentExpr.replace(/(.+?)\s*\?\s*(.+?)\s*:\s*(.+?)(?=\s*|$)/g, (match, condition, value1, value2) => {
+        // Evaluate condition
+        const result = new Function(`return ${condition}`)();
+        const chosenValue = result ? value1 : value2;
+        addStep(
+            'Ternary Evaluation',
+            [condition, value1, value2],
+            chosenValue,
+            `Evaluated ternary condition '${condition}' to choose '${chosenValue}'`
+        );
+        return chosenValue;
+      });
+
+      // Evaluate the final expression
       const result = new Function(`return ${currentExpr}`)();
-      
+
       addStep(
-        'Final Evaluation',
-        [currentExpr],
-        result?.toString() || '',
-        'Evaluated the final expression'
+          'Final Evaluation',
+          [currentExpr],
+          result?.toString() || '',
+          'Evaluated the final expression'
       );
 
       return [result?.toString() || '', steps];
@@ -127,7 +190,7 @@ export function ExpressionEvaluator() {
 
   const handleEvaluate = (values: Record<string, string>) => {
     const [result, steps] = evaluateExpression(expression, values);
-    
+
     setEvaluationResult({
       values,
       result,
@@ -137,38 +200,34 @@ export function ExpressionEvaluator() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="grid gap-6">
-          <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${
-            step !== 1 ? 'opacity-60' : ''
-          }`}>
-            <ExpressionInput onValidExpression={handleValidExpression} />
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="grid gap-6">
+            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${step !== 1 ? 'opacity-60' : ''}`}>
+              <ExpressionInput onValidExpression={handleValidExpression} />
+            </div>
+
+            {step >= 2 && (
+                <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${step !== 2 ? 'opacity-60' : ''}`}>
+                  <VariableInput
+                      variables={variables}
+                      onEvaluate={handleEvaluate}
+                  />
+                </div>
+            )}
+
+            {step === 3 && evaluationResult && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <EvaluationVisualizer
+                      expression={expression}
+                      variables={evaluationResult.values}
+                      result={evaluationResult.result}
+                      steps={evaluationResult.steps}
+                  />
+                </div>
+            )}
           </div>
-
-          {step >= 2 && (
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${
-              step !== 2 ? 'opacity-60' : ''
-            }`}>
-              <VariableInput
-                variables={variables}
-                onEvaluate={handleEvaluate}
-              />
-            </div>
-          )}
-
-          {step === 3 && evaluationResult && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <EvaluationVisualizer
-                expression={expression}
-                variables={evaluationResult.values}
-                result={evaluationResult.result}
-                steps={evaluationResult.steps}
-              />
-            </div>
-          )}
         </div>
       </div>
-    </div>
   );
 }
