@@ -69,6 +69,30 @@ export function ExpressionEvaluator() {
         );
       });
 
+      // Handle string equality comparisons
+      str = str.replace(/(["'].*?["'])\s*(==|!=)\s*(["'].*?["'])/g, (match, left, operator, right) => {
+        if (left === 'null' || right === 'null') {
+          const result = operator === '==' ? (left === right) : (left !== right);
+          return addStep(
+            'String Comparison',
+            [left, operator, right],
+            result.toString(),
+            `Compared ${left} ${operator} ${right}`
+          );
+        }
+
+        const leftStr = left.replace(/^["'](.*?)["']$/, '$1');
+        const rightStr = right.replace(/^["'](.*?)["']$/, '$1');
+        const result = operator === '==' ? (leftStr === rightStr) : (leftStr !== rightStr);
+
+        return addStep(
+          'String Comparison',
+          [left, operator, right],
+          result.toString(),
+          `Compared ${left} ${operator} ${right}`
+        );
+      });
+
       // Handle other string operations only if the value is not null
       str = str.replace(/(".*?")\.length\(\)/g, (match, strValue) => {
         if (strValue === 'null') return '0';
@@ -108,12 +132,57 @@ export function ExpressionEvaluator() {
         );
       });
 
+      // Handle substring method
+      str = str.replace(/(".*?")\.substring\((\d+),\s*(\d+)\)/g, (match, strValue, start, end) => {
+        if (strValue === 'null') return 'null';
+        const actualStr = strValue.replace(/^"(.*)"$/, '$1');
+        const stringObj = new StringClass(actualStr);
+        const result = stringObj.substring(parseInt(start), parseInt(end));
+        return addStep(
+          'String Substring',
+          [strValue, start, end],
+          `"${result}"`,
+          `Extracted substring from ${strValue} from index ${start} to ${end}`
+        );
+      });
+
+      return str;
+    };
+
+    const processNumericOps = (str: string) => {
+      // Handle numeric comparisons
+      str = str.replace(/(\d+)\s*(==|!=|>|<|>=|<=)\s*(\d+)/g, (match, left, operator, right) => {
+        let result: boolean;
+        const leftNum = parseInt(left);
+        const rightNum = parseInt(right);
+
+        switch (operator) {
+          case '==': result = leftNum === rightNum; break;
+          case '!=': result = leftNum !== rightNum; break;
+          case '>': result = leftNum > rightNum; break;
+          case '<': result = leftNum < rightNum; break;
+          case '>=': result = leftNum >= rightNum; break;
+          case '<=': result = leftNum <= rightNum; break;
+          default: result = false;
+        }
+
+        return addStep(
+          'Numeric Comparison',
+          [left, operator, right],
+          result.toString(),
+          `Compared ${left} ${operator} ${right}`
+        );
+      });
+
       return str;
     };
 
     try {
       // Replace get() calls first
       currentExpr = currentExpr.replace(/get\(['"](.*?)['"]\)/g, (match, key) => get(key));
+
+      // Process numeric operations
+      currentExpr = processNumericOps(currentExpr);
 
       // Process string operations and null checks
       currentExpr = processStringOps(currentExpr);

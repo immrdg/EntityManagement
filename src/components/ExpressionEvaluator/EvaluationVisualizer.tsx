@@ -9,7 +9,7 @@ interface EvaluationStep {
 
 interface EvaluationVisualizerProps {
   expression: string;
-  variables: Record<string, string>;
+  variables: Record<string, string | null>;
   result: string;
   steps: EvaluationStep[];
 }
@@ -73,7 +73,7 @@ export function EvaluationVisualizer({ expression, variables, result, steps }: E
               <GitBranch className="w-5 h-5 text-blue-500" />
               {operation} Steps
             </h3>
-            
+
             {groupSteps.map((step, stepIndex) => (
               <div key={stepIndex} className="relative">
                 {stepIndex > 0 && (

@@ -1,7 +1,7 @@
 export class StringClass {
     value: string;
 
-    constructor(value: never) {
+    constructor(value: string) {
         this.value = value;
     }
 
@@ -12,7 +12,7 @@ export class StringClass {
 
     // String method to check equality
     equals(other: StringClass): boolean {
-        return this.value.equals(other.value);
+        return this.value === other.value;
     }
 
     // String method to concatenate two strings

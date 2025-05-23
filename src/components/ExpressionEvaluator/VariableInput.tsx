@@ -22,12 +22,12 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
       acc[variable] = '';
       return acc;
     }, {} as Record<string, string | null>);
-    
+
     const initialInputTypes = variables.reduce((acc, variable) => {
       acc[variable] = 'text';
       return acc;
     }, {} as Record<string, 'text' | 'null'>);
-    
+
     setValues(initialValues);
     setInputTypes(initialInputTypes);
   }, [variables]);
@@ -44,7 +44,7 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
       ...prev,
       [variable]: type
     }));
-    
+
     setValues(prev => ({
       ...prev,
       [variable]: type === 'null' ? null : ''
@@ -56,7 +56,7 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
       acc[key] = inputTypes[key] === 'null' ? null : value;
       return acc;
     }, {} as Record<string, string | null>);
-    
+
     onEvaluate(processedValues);
   };
 
@@ -69,7 +69,7 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Variable Values</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Enter values for the variables in your expression or set them as null
+            For each variable, choose whether to provide a text value or set it as null
           </p>
         </div>
       </div>
@@ -85,15 +85,15 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
                 value={inputTypes[variable]}
                 onValueChange={(value: 'text' | 'null') => handleInputTypeChange(variable, value)}
               >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Select type" />
+                <SelectTrigger className="w-[140px] bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
+                  <SelectValue placeholder="Choose type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Text Input</SelectItem>
-                  <SelectItem value="null">Null</SelectItem>
+                  <SelectItem value="text">Text Value</SelectItem>
+                  <SelectItem value="null">Set as Null</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {inputTypes[variable] === 'text' ? (
                 <input
                   type="text"
@@ -103,8 +103,9 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
                   placeholder={`Enter value for ${variable}`}
                 />
               ) : (
-                <div className="flex-1 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-500">
-                  null
+                <div className="flex-1 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 flex items-center justify-between">
+                  <span className="font-mono text-blue-600">null</span>
+                  <span className="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded">Variable will be null in evaluation</span>
                 </div>
               )}
             </div>
@@ -113,8 +114,12 @@ export function VariableInput({ variables, onEvaluate }: VariableInputProps) {
 
         <button
           onClick={handleEvaluate}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
           Evaluate Expression
         </button>
       </div>

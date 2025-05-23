@@ -37,23 +37,36 @@ export function ExpressionInput({ onValidExpression }: ExpressionInputProps) {
       // 1. Replace get() functions first
       validationCode = validationCode.replace(/get\(['"](.*?)['"]\)/g, '"dummy"');
 
-      // 2. Handle logical operators with proper spacing and parentheses
+      // 2. Handle string methods
+      validationCode = validationCode.replace(/(['"].*?['"])\.length\(\)/g, '0');
+      validationCode = validationCode.replace(/(['"].*?['"])\.equals\((['"].*?['"])\)/g, 'true');
+      validationCode = validationCode.replace(/(['"].*?['"])\.concat\((['"].*?['"])\)/g, '"dummy"');
+      validationCode = validationCode.replace(/(['"].*?['"])\.substring\(\d+,\s*\d+\)/g, '"dummy"');
+
+      // 3. Handle comparison operators
+      validationCode = validationCode.replace(/(['"].*?['"]|null)\s*(==|!=)\s*(null|['"].*?['"])/g, 'true');
+
+      // 4. Handle logical operators with proper spacing and parentheses
       validationCode = validationCode.replace(/\(\s*([^()]+?)\s*\)/g, (match, group) => {
         return `(${group
             .replace(/\s+and\s+/g, ' && ')
             .replace(/\s+or\s+/g, ' || ')})`;
       });
 
-      // 3. Handle any remaining logical operators outside parentheses
+      // 5. Handle any remaining logical operators outside parentheses
       validationCode = validationCode
           .replace(/\s+and\s+/g, ' && ')
           .replace(/\s+or\s+/g, ' || ');
 
-      // 4. Handle special keywords
+      // 6. Handle special keywords
       validationCode = validationCode
           .replace(/\bnull\b/g, 'null')
           .replace(/\btrue\b/g, 'true')
           .replace(/\bfalse\b/g, 'false');
+
+      // 7. Handle ternary operators
+      // Make sure all ternary operators have proper JavaScript syntax
+      validationCode = validationCode.replace(/([^?:]+?)\?([^?:]+?):([^?:]+)/g, '($1)?($2):($3)');
 
       // Try parsing the expression
       new Function(`return ${validationCode}`);
@@ -94,13 +107,24 @@ export function ExpressionInput({ onValidExpression }: ExpressionInputProps) {
           <CollapsibleContent>
             <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">String Methods</h3>
+                <h3 className="font-medium text-gray-900">Variable Access</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-md border border-gray-200">
                     <code className="text-sm text-purple-600">get('variableName')</code>
                     <p className="text-sm text-gray-600 mt-1">Retrieves a variable's value</p>
                     <p className="text-xs text-gray-500 mt-1">Example: get('name')</p>
                   </div>
+                  <div className="bg-white p-3 rounded-md border border-gray-200">
+                    <code className="text-sm text-purple-600">get('key1') != null</code>
+                    <p className="text-sm text-gray-600 mt-1">Check if variable exists</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('user') != null</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <h3 className="font-medium text-gray-900">String Methods</h3>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-md border border-gray-200">
                     <code className="text-sm text-purple-600">.length()</code>
                     <p className="text-sm text-gray-600 mt-1">Returns string length</p>
@@ -125,17 +149,17 @@ export function ExpressionInput({ onValidExpression }: ExpressionInputProps) {
               </div>
 
               <div className="mt-6 space-y-4">
-                <h3 className="font-medium text-gray-900">Null Handling</h3>
+                <h3 className="font-medium text-gray-900">Comparison Operators</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-md border border-gray-200">
-                    <code className="text-sm text-purple-600">!= null</code>
-                    <p className="text-sm text-gray-600 mt-1">Check if not null</p>
-                    <p className="text-xs text-gray-500 mt-1">Example: get('name') != null</p>
+                    <code className="text-sm text-purple-600">== (Equal to)</code>
+                    <p className="text-sm text-gray-600 mt-1">Check if values are equal</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('role') == 'admin'</p>
                   </div>
                   <div className="bg-white p-3 rounded-md border border-gray-200">
-                    <code className="text-sm text-purple-600">== null</code>
-                    <p className="text-sm text-gray-600 mt-1">Check if null</p>
-                    <p className="text-xs text-gray-500 mt-1">Example: get('name') == null</p>
+                    <code className="text-sm text-purple-600">!= (Not equal to)</code>
+                    <p className="text-sm text-gray-600 mt-1">Check if values are not equal</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('status') != 'inactive'</p>
                   </div>
                 </div>
               </div>
@@ -146,17 +170,31 @@ export function ExpressionInput({ onValidExpression }: ExpressionInputProps) {
                   <div className="bg-white p-3 rounded-md border border-gray-200">
                     <code className="text-sm text-purple-600">and</code>
                     <p className="text-sm text-gray-600 mt-1">Logical AND</p>
-                    <p className="text-xs text-gray-500 mt-1">Example: (true and false)</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('a') != null and get('a') == 'value'</p>
                   </div>
                   <div className="bg-white p-3 rounded-md border border-gray-200">
                     <code className="text-sm text-purple-600">or</code>
                     <p className="text-sm text-gray-600 mt-1">Logical OR</p>
-                    <p className="text-xs text-gray-500 mt-1">Example: (a and b) or (c and d)</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('a') == 'x' or get('b') == 'y'</p>
                   </div>
                   <div className="bg-white p-3 rounded-md border border-gray-200">
                     <code className="text-sm text-purple-600">? :</code>
                     <p className="text-sm text-gray-600 mt-1">Ternary operator</p>
-                    <p className="text-xs text-gray-500 mt-1">Example: (true and false) ? 'yes' : 'no'</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: get('a') != null ? get('a') : 'default'</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <h3 className="font-medium text-gray-900">Complex Expressions</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-white p-3 rounded-md border border-gray-200">
+                    <code className="text-sm text-purple-600">get('a')!=null and get('a')=='aa'?'aaa':'aa'</code>
+                    <p className="text-sm text-gray-600 mt-1">Combines logical operators and ternary</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md border border-gray-200">
+                    <code className="text-sm text-purple-600">1==1?1:2</code>
+                    <p className="text-sm text-gray-600 mt-1">Simple ternary with numeric values</p>
                   </div>
                 </div>
               </div>
@@ -173,7 +211,7 @@ export function ExpressionInput({ onValidExpression }: ExpressionInputProps) {
               className={`w-full p-4 rounded-lg border ${
                   error ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-purple-200'
               } focus:outline-none focus:ring-2 transition-colors`}
-              placeholder="Enter your expression "
+              placeholder="Enter your expression (e.g., get('a')!=null and get('a')=='value'?'result':'default')"
           />
           </div>
 
